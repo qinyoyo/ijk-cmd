@@ -1,4 +1,6 @@
-cp -R ~/ijk-cmd ~/ijkplayer
+cp -R ~/ijk-cmd/android ~/ijkplayer/android
+cp -R ~/ijk-cmd/config ~/ijkplayer/config
+cp -R ~/ijk-cmd/ijkmedia ~/ijkplayer/ijkmedia
 
 cd ~/ijkplayer/android/contrib/ffmpeg-arm64/fftools
 rm -f ffmpeg.c

@@ -1,5 +1,7 @@
 ## **ijkplayer 编译支持 ffmpeg 命令行**
 
+重新编译 ijkplayer， 支持 ffmpeg 的命令行运行模式 （command line）。
+
 在 windows 10 的 linux 子系统 （ubuntu18.04）下完成。与linux无异。
 
 ##### 1、安装 Git，jdk
