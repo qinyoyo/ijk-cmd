@@ -85,6 +85,7 @@ git checkout -B latest k0.8.8
 ```
 cd
 git clone https://github.com/qinyoyo/ijk-cmd ijk-cmd
+chmod +755 ~/ijk-cmd/initcmd.sh
 ~/ijk-cmd/initcmd.sh
 ```
 
@@ -92,8 +93,14 @@ git clone https://github.com/qinyoyo/ijk-cmd ijk-cmd
 
 ```
 cd ~/ijkplayer/android/contrib
+
+需要openssl的话
+./compile-openssl.sh clean
+./compile-openssl.sh all
+
 ./compile-ffmpeg.sh clean
 ./compile-ffmpeg.sh all
+
 cd ..
 ./compile-ijk.sh all
 ```
@@ -125,13 +132,10 @@ new IjkMediaPlayer().ffmpegExec(new String[] {
 
 2）输出重定向到文件，通过增加最后一个参数实现
 
-		> \>: 输出到 dir+"/ffmpeg.log",覆盖
-		>
-		> \>>: 附加到 dir+"/ffmpeg.log"
-		>
-		> \>文件名: 输出到指定文件
-		>
-		> \>>文件名:附加到指定文件
+		>: 输出到 dir+"/ffmpeg"(第一个参数指定),覆盖
+		>>: 附加到 dir+"/ffmpeg"(第一个参数指定)
+		>文件名: 输出到指定文件
+		>>文件名:附加到指定文件
 
 
 
