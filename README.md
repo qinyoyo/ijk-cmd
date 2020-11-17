@@ -139,6 +139,158 @@ new IjkMediaPlayer().ffmpegExec(new String[] {
 		>文件名: 输出到指定文件
 		>>文件名:附加到指定文件
 
+##### 9、修改记录
+
+###### 1）ffmpeg.c
+
+​		增加重定向输出支持
+
+```
+// add by qinyoyo, for redirect
+
+static FILE * av_log_file_handler = 0;
+static void log_file_output(void* ptr, int level, const char* fmt, va_list vl) {   
+    if (av_log_file_handler) {
+        vfprintf(av_log_file_handler, fmt, vl);
+    }
+}
+static void set_av_log_callback(FILE* file) {
+    if (file) {
+        av_log_file_handler = file;
+        av_log_set_callback(log_file_output);
+    }
+    else {
+        if (av_log_file_handler) fclose(av_log_file_handler);
+        av_log_file_handler = 0;
+        av_log_set_callback(0);
+    }
+}
+//
+```
+
+增加当前目录设置
+
+        int64_t ti;
+    // add by qinyoyo for file write
+    	char buf[512];
+    	strcpy(buf,argv[0]);
+    	int p=strlen(buf)-1;
+    	while (p && buf[p]!='/' ) p--;
+    	if (p>=0) buf[p]=0;
+    	av_log(NULL, AV_LOG_ERROR, "chdir to \"%s\"\n", buf);
+    	chdir(buf);  
+    
+    // add by qinyoyo, for redirect
+        FILE * logFile = 0;
+        if (argc > 1 && argv[argc-1][0] == '>') {  // redirect
+            int append = 0;
+            char* fileName = 0;
+            int len = strlen(argv[argc - 1]);
+            if (len == 1) {
+                append = 0;
+                fileName = argv[0];
+            }
+            else if (len == 2 && argv[argc - 1][1] == '>') {
+                append = 1;
+                fileName = argv[0];
+            }
+            else if (argv[argc - 1][1] == '>') {
+                append = 1;
+                fileName = argv[argc - 1]+2;
+            }
+            else {
+                append = 0;
+                fileName = argv[argc - 1] + 1;
+            }
+            if (fileName && *fileName) {
+                logFile = fopen(fileName, append ? "a+" : "wt");
+                if (logFile) set_av_log_callback(logFile);
+            }
+            argc--;
+        }
+    //
+退出初始化
+
+```
+if ((decode_error_stat[0] + decode_error_stat[1]) * max_error_rate < 			    decode_error_stat[1])
+        exit_program(69);
+
+// add by qinyoyo for ffmpeg command line
+    nb_filtergraphs = 0;
+    nb_output_files = 0;
+    nb_output_streams = 0;
+    nb_input_files = 0;
+    nb_input_streams = 0;
+    if (logFile) set_av_log_callback(0);
+// 
+```
+
+###### 2）cmdutils.c
+
+删除退出程序函数代码
+
+```
+void exit_program(int ret)
+{
+	/* delete by qinyoyo for ffmpeg command line
+    if (program_exit)
+        program_exit(ret);
+    exit(ret);
+    */
+}
+```
+
+###### 3）ijkplayer_jin.c
+
+增加jni函数
+
+```
+// add FFmpegApi_exec by qinyoyo for ffmpeg command line
+int main(int argc, char ** argv);
+static jint IjkMediaPlayer_exec(JNIEnv *env,jobject weak_this,jobjectArray cmd){
+    int len = (*env)->GetArrayLength(env,cmd);
+    char *argv[len];
+    int i;
+    for(i = 0;i < len;++i){
+        argv[i] = (char *) (*env)->GetStringUTFChars(env,(jstring) (*env)->GetObjectArrayElement(env,cmd,i),0);
+    }
+    return main(len,argv);
+}
+```
+
+jni函数动态注册列表
+
+    { "_setFrameAtTime",        "(Ljava/lang/String;JJII)V", (void *) IjkMediaPlayer_setFrameAtTime },
+    { "ffmpegExec",             "([Ljava/lang/String;)I",   (void *) IjkMediaPlayer_exec},  // add FFmpegApi_exec by qinyoyo for ffmpeg command line
+###### 4）do-compile-ffmpeg.sh
+
+增加编译连接fftools的控制
+
+```
+#---  add by qinyoyo for ffmpeg command line ---
+export CONFIG_FFMPEG=yes
+#-----------------------------------------------
+
+#--- add fftools to FF_MODULE_DIRS by qinyoyo for ffmpeg command line
+FF_MODULE_DIRS="compat libavcodec libavfilter libavformat libavutil libswresample libswscale fftools"
+```
+
+###### 5）IjkMediaPlayer.java
+
+增加native调用函数,使用成员函数而非静态函数，确保jni初始化后才可调用
+
+```
+    public native int  ffmpegExec(String command[]);  // add by qinyoyo for ffmpeg command line
+```
+
+###### 6）module-ffmpeg.sh
+
+根据需要修改 module-default.sh必须的参数
+
+```
+export COMMON_FF_CFG_FLAGS="$COMMON_FF_CFG_FLAGS --enable-ffmpeg"
+```
+
 
 
 **备注：**
